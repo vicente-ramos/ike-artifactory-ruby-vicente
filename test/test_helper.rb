@@ -21,16 +21,3 @@ class FakeResponse
     "fake response"
   end
 end
-
-class IKEArtifactoryTestBase < Minitest::Test
-  def setup
-    super
-    @artifactory = IKE::Artifactory::Client.new(**{
-      :server => TEST_SERVER,
-      :repo_key => TEST_REPO_KEY,
-      :folder_path => TEST_FOLDER_PATH,
-      :user => TEST_USER,
-      :password => TEST_PASSWORD
-    })
-  end
-end

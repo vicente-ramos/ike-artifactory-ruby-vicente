@@ -4,19 +4,14 @@ class UnitTestDockerCleaner < Minitest::Test
 
   def setup
     @artifactory = IKE::Artifactory::DockerCleaner.new(
-      repo_uri: 'avvo-docker-local.artifactory.internetbrands.com',
-      repo_name: 'avvo/amos',
+      repo_url: 'https://artifactory.internetbrands.com/artifactory/avvo-docker-local/avvo/amos',
       days_old: 30,
       images_exclude_list: %w[fake1 fake2]
     )
   end
 
-  def test_repo_uri
-    assert @artifactory.repo_uri == 'avvo-docker-local.artifactory.internetbrands.com'
-  end
-
-  def test_repo_repo_name
-    assert @artifactory.repo_name == 'avvo/amos'
+  def test_repo_url
+    assert @artifactory.repo_url == 'https://artifactory.internetbrands.com/artifactory/avvo-docker-local/avvo/amos'
   end
 
   def test_days_old
@@ -27,14 +22,17 @@ class UnitTestDockerCleaner < Minitest::Test
     assert @artifactory.images_exclude_list == %w[fake1 fake2]
   end
 
-  def test_server_attribute
-    assert @artifactory.respond_to? :repo_uri
-    assert @artifactory.respond_to? :repo_uri=
+  def test_repo_name
+    assert @artifactory.repo_name == 'avvo/amos'
   end
 
-  def test_repo_key_attribute
-    assert @artifactory.respond_to? :repo_name
-    assert @artifactory.respond_to? :repo_name=
+  def test_repo_key
+    assert @artifactory.repo_key == 'avvo-docker-local'
+  end
+
+  def test_server_attribute
+    assert @artifactory.respond_to? :repo_url
+    assert @artifactory.respond_to? :repo_url=
   end
 
   def test_folder_path_attribute
