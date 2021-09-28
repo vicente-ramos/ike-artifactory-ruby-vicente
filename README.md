@@ -1,11 +1,11 @@
-# IKEArtifactoryGem
+# IKE Artifactory
 
 Gem to interact with Artifactory using Ruby language.
 
 ## API
 
 #### ready
-Some IKEArtifactoryGem Client's methods use the *ready* method to check if the instance has valid values in its
+Some IKE Artifactory Client's methods use the *ready* method to check if the instance has valid values in its
 attributes:
 
 * *server*: Artifactory server hostname.
@@ -19,8 +19,8 @@ Do not have parameters.
 
 ##### Usage
 
-    irb > artifactory = IKEArtifactoryGem::Client.new()
-    => #<IKEArtifactoryGem::Client:0x00007f9b20ce81b0 @server=nil, @repo_key=nil, @folder_path=nil, @user=nil, @password=nil>
+    irb > artifactory = IKE::Artifactory::Client.new()
+    => #<IKE::Artifactory::Client:0x00007f9b20ce81b0 @server=nil, @repo_key=nil, @folder_path=nil, @user=nil, @password=nil>
     irb > artifactory.ready?
     => false
 
@@ -36,7 +36,7 @@ Returns the days since the last update of the given object.
 
 ##### Usage
 
-    irb > artifactory = IKEArtifactoryGem::Client.new()
+    irb > artifactory = IKE::Artifactory::Client.new()
     ...
     irb > artifactory.get_days_old 'ib/fedora/34'
 
@@ -60,7 +60,7 @@ boolean:
 
 ##### Usage
 
-    irb > artifactory = IKEArtifactoryGem::Client.new()
+    irb > artifactory = IKE::Artifactory::Client.new()
     ...
     irb > artifactory.evaluate_container_image 'amos', '<some_tag>', [<tag1>, ..., <tagN>], 30
 
@@ -76,7 +76,7 @@ Returns a hash with information about the given object.
 
 ##### Usage
 
-    irb > artifactory = IKEArtifactoryGem::Client.new()
+    irb > artifactory = IKE::Artifactory::Client.new()
     ...
     irb > artifactory.get_object_info 'ib/fedora/34'
 
@@ -93,7 +93,7 @@ Remove the given object (file or folder) from repository.
 
 ##### Usage
 
-    irb > artifactory = IKEArtifactoryGem::Client.new()
+    irb > artifactory = IKE::Artifactory::Client.new()
     ...
     irb > artifactory.delete_object 'ib/fedora/34'
 

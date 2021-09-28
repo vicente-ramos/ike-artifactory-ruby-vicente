@@ -1,6 +1,6 @@
 require "test_helper"
 
-class UnitTestIKEArtifactoryGem < Minitest::Test
+class UnitTestIKEArtifactory < Minitest::Test
 
   def setup
     super

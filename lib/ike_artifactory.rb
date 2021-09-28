@@ -29,5 +29,19 @@ module IKE
         "IKEArtifactoryGem end it's tasks"
       end
     end
+
+    class DockerCleaner
+      attr_accessor :repo_uri
+      attr_accessor :repo_name
+      attr_accessor :days_old
+      attr_accessor :images_exclude_list
+
+      def initialize(repo_uri:, repo_name:, days_old:, images_exclude_list:)
+        @repo_uri = repo_uri
+        @repo_name = repo_name
+        @days_old = days_old
+        @images_exclude_list = images_exclude_list
+      end
+    end
   end
 end
