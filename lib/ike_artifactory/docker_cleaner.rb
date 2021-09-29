@@ -50,6 +50,7 @@ module IKE
           end
 
           if tag_days_old > @days_old
+            puts "Removing container image: #{tag}."
             @client.delete_object "#{repo_name}/#{tag}"
           end
         end
