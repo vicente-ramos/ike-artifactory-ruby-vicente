@@ -123,7 +123,7 @@ class UnitTestClientMethods < Minitest::Test
 
   def test_get_object_info_raise_not_ready
     artifactory = IKE::Artifactory::Client.new()
-    exception = assert_raises IKE::Artifactory::IKEArtifactoryGemNotReady do
+    exception = assert_raises IKE::Artifactory::IKEArtifactoryClientNotReady do
       artifactory.get_object_info 'fake-object'
     end
     assert_equal('Required attributes are missing. IKEArtifactoryGem not ready.', exception.message)
@@ -197,7 +197,7 @@ class UnitTestClientMethods < Minitest::Test
 
   def test_get_days_old_raise_not_ready
     artifactory = IKE::Artifactory::Client.new()
-    exception = assert_raises IKE::Artifactory::IKEArtifactoryGemNotReady do
+    exception = assert_raises IKE::Artifactory::IKEArtifactoryClientNotReady do
       artifactory.get_days_old '/fake'
     end
     assert_equal('Required attributes are missing. IKEArtifactoryGem not ready.', exception.message)
@@ -307,7 +307,7 @@ class UnitTestClientMethods < Minitest::Test
 
   def test_delete_object_raise_not_ready
     artifactory = IKE::Artifactory::Client.new()
-    exception = assert_raises IKE::Artifactory::IKEArtifactoryGemNotReady do
+    exception = assert_raises IKE::Artifactory::IKEArtifactoryClientNotReady do
       artifactory.delete_object 'fake-object'
     end
     assert_equal('Required attributes are missing. IKEArtifactoryGem not ready.', exception.message)
@@ -354,6 +354,115 @@ class UnitTestClientMethods < Minitest::Test
                              [mock_response, 'fake-request', 'fake-result'] do
       result = @artifactory.delete_object 'fake-object'
       assert result
+    end
+  end
+  def test_get_directories_raise_not_ready
+    artifactory = IKE::Artifactory::Client.new()
+    exception = assert_raises IKE::Artifactory::IKEArtifactoryClientNotReady do
+      artifactory.get_directories('/fake')
+    end
+    assert_equal('Required attributes are missing. IKEArtifactoryGem not ready.', exception.message)
+  end
+
+  def test_get_directories_folder_path_is_default
+    mock_request = Minitest::Mock.new
+    mock_request.expect :call,
+                        true,
+                        [:method => :get,
+                         :url => 'https://' + @artifactory.server +
+                           '/artifactory/api/storage/' + @artifactory.repo_key + '/' +
+                           @artifactory.folder_path + '/',
+                         :user => @artifactory.user, :password => @artifactory.password]
+
+    RestClient::Request.stub :execute, mock_request do
+      @artifactory.get_directories
+    end
+    assert_mock mock_request
+  end
+
+  def test_get_directories_folder_path_parameter
+    mock_request = Minitest::Mock.new
+    mock_request.expect :call,
+                        true,
+                        [:method => :get,
+                         :url => 'https://' + @artifactory.server +
+                           '/artifactory/api/storage/' + @artifactory.repo_key + '/fake/',
+                         :user => @artifactory.user, :password => @artifactory.password]
+
+    RestClient::Request.stub :execute, mock_request do
+      @artifactory.get_directories 'fake'
+    end
+    assert_mock mock_request
+  end
+
+  def test_get_directories_return_nil_if_not_connect
+    mock_response = Minitest::Mock.new
+    mock_response.expect :code, 401
+
+    RestClient::Request.stub :execute,
+                             nil,
+                             [mock_response, 'fake1', 'fake2' ] do
+      result = @artifactory.get_directories
+      assert result.nil?
+    end
+  end
+
+  def test_get_directories_return_empty_array
+    mock_response = Minitest::Mock.new
+    mock_response.expect :code, 200
+    mock_response.expect :to_str, '{ "test": "fake" }'
+
+    RestClient::Request.stub :execute,
+                             nil,
+                             [mock_response, 'fake1', 'fake2' ] do
+      result = @artifactory.get_directories
+      assert_instance_of Array, result
+      assert_empty result
+    end
+  end
+
+  def test_get_directories_json_parse_called
+    mock_response = Minitest::Mock.new
+    mock_response.expect :code, 200
+    mock_response.expect :to_str, '{ "test": "fake" }'
+    mock_json_parse = Minitest::Mock.new
+    mock_json_parse.expect :call, {:fake => 'fake'}, ['{ "test": "fake" }']
+
+    RestClient::Request.stub :execute,
+                             nil,
+                             [mock_response, 'fake1', 'fake2' ] do
+      JSON.stub :parse, mock_json_parse do
+        @artifactory.get_directories
+      end
+    end
+    assert_mock mock_json_parse
+  end
+
+  def test_get_directories_loop_children_returns_uri
+    mock_response = Minitest::Mock.new
+    mock_response.expect :code, 200
+    mock_response.expect :to_str, '{ "children": [{"uri": "/fake1", "folder": true},{"uri": "/fake2", "folder": true}] }'
+
+    RestClient::Request.stub :execute,
+                             nil,
+                             [mock_response, 'fake1', 'fake2' ] do
+      result = @artifactory.get_directories
+      assert_includes result, 'fake1'
+      assert_includes result, 'fake2'
+    end
+  end
+
+  def test_get_directories_returns_only_folders
+    mock_response = Minitest::Mock.new
+    mock_response.expect :code, 200
+    mock_response.expect :to_str, '{ "children": [{"uri": "/fake1", "folder": true},{"uri": "/fake2", "folder": false}] }'
+
+    RestClient::Request.stub :execute,
+                             nil,
+                             [mock_response, 'fake1', 'fake2' ] do
+      result = @artifactory.get_directories
+      assert_includes result, 'fake1'
+      refute_includes result, 'fake2'
     end
   end
 end

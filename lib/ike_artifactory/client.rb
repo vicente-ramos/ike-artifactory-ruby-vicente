@@ -31,7 +31,7 @@ module IKE
       end
 
       def delete_object(object_path)
-        raise IKEArtifactoryGemNotReady.new(msg = 'Required attributes are missing. IKEArtifactoryGem not ready.') unless self.ready?
+        raise IKEArtifactoryClientNotReady.new(msg = 'Required attributes are missing. IKEArtifactoryGem not ready.') unless self.ready?
 
         RestClient::Request.execute(
           :method => :delete,
@@ -44,9 +44,36 @@ module IKE
         end
       end
 
-      def get_days_old(object_path)
+      def get_directories(path = nil)
+        directories = []
+        raise IKEArtifactoryClientNotReady.new(msg = 'Required attributes are missing. IKEArtifactoryGem not ready.') unless self.ready?
 
-        raise IKEArtifactoryGemNotReady.new(msg='Required attributes are missing. IKEArtifactoryGem not ready.') unless self.ready?
+        if path.nil?
+          path = @folder_path
+        end
+
+        RestClient::Request.execute(
+          :method => :get,
+          :url => 'https://' + @server + '/artifactory/api/storage/' + @repo_key + '/' + path + '/',
+          :user => @user,
+          :password => @password
+        ) do |response, request, result|
+          if response.code == 200
+            answer = JSON.parse response.to_str
+            return directories unless answer.key?('children')
+
+            answer['children'].each do |child|
+              if child['folder']
+                directories.append child['uri'][1..]
+              end
+            end
+            return directories
+          end
+        end
+      end
+
+      def get_days_old(object_path)
+        raise IKEArtifactoryClientNotReady.new(msg='Required attributes are missing. IKEArtifactoryGem not ready.') unless self.ready?
 
         RestClient::Request.execute(
           :method => :get,
@@ -64,7 +91,7 @@ module IKE
       end
 
       def get_object_info(object_path)
-        raise IKEArtifactoryGemNotReady.new(msg = 'Required attributes are missing. IKEArtifactoryGem not ready.') unless self.ready?
+        raise IKEArtifactoryClientNotReady.new(msg = 'Required attributes are missing. IKEArtifactoryGem not ready.') unless self.ready?
 
         RestClient::Request.execute(
           :method => :get,

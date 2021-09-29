@@ -40,5 +40,15 @@ class ClientFunctionalTest < Minitest::Test
     assert_includes(result.keys, 'createdBy')
   end
 
+  def test_get_directories
+    result = @artifactory.get_directories '/ib'
+
+    assert_includes result, 'ship-it'
+    assert_includes result, 'ruby-testing'
+    assert_includes result, 'centos'
+    assert_includes result, 'fedora'
+    assert_instance_of Array, result
+  end
+  
 end
 

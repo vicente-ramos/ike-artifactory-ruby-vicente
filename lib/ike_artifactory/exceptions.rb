@@ -1,6 +1,6 @@
 module IKE
   module Artifactory
-    class IKEArtifactoryGemNotReady < StandardError
+    class IKEArtifactoryClientNotReady < StandardError
       def initialize(msg="Unknown.")
         super
       end
