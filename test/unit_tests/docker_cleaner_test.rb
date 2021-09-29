@@ -61,14 +61,14 @@ class UnitTestDockerCleanerMethods < Minitest::Test
     )
   end
 
-  def test_call_get_directories_with_repo_name
+  def test_call_get_objects_by_days_old_with_repo_name
     skip('Broken.')
-    mock_get_directories = Minitest::Mock.new()
-    mock_get_directories.expect :call,
-                                %w[fake1 fake2],
+    mock_get_objects_by_days_old = Minitest::Mock.new()
+    mock_get_objects_by_days_old.expect :call,
+                                        { 'fake' => 3 },
                                 ['avvo/amos']
     client = @docker_cleaner.client
-    client.stub get_directories, mock_get_directories do
+    client.stub get_objects_by_days_old, mock_get_directories do
       @docker_cleaner.cleanup!
     end
 
@@ -79,7 +79,7 @@ class UnitTestDockerCleanerMethods < Minitest::Test
     skip('Broken.')
     expected_output = 'Working with tag fake1\nWorking with tag fake2'
     client = @docker_cleaner.client
-    client.stub get_directories, %w[fake1 fake2] do
+    client.stub get_objects_by_days_old, { 'fake1' => 3, 'fake2' => 4 } do
       assert_output(expected_output) { @docker_cleaner.cleanup! }
     end
   end
@@ -92,7 +92,7 @@ class UnitTestDockerCleanerMethods < Minitest::Test
                         ['fake']
 
     client = @docker_cleaner.client
-    client.stub get_directories, %w[fake] do
+    client.stub get_objects_by_days_old, { 'fake' => 3 } do
       @docker_cleaner.images_exclude_list.stub include?, mock_include do
         @docker_cleaner.cleanup!
       end
@@ -111,7 +111,7 @@ class UnitTestDockerCleanerMethods < Minitest::Test
                         ['fake2']
 
     client = @docker_cleaner.client
-    client.stub get_directories, %w[fake1 fake2] do
+    client.stub get_objects_by_days_old, { 'fake1' => 3, 'fake2' => 4 } do
       @docker_cleaner.images_exclude_list.stub include?, mock_include do
         assert_output(expected_output) { @docker_cleaner.cleanup! }
       end
