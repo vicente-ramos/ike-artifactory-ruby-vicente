@@ -61,10 +61,6 @@ class UnitTestDockerCleanerMethods < Minitest::Test
     )
   end
 
-  def test_can_call_cleanup!
-    @docker_cleaner.cleanup!  # should not fail
-  end
-
   def test_call_get_directories_with_repo_name
     skip('Broken.')
     mock_get_directories = Minitest::Mock.new()

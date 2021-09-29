@@ -104,6 +104,30 @@ module IKE
           end
         end
       end
+
+      def get_objects_by_days_old path
+        objects = {}
+        raise IKEArtifactoryClientNotReady.new(msg = 'Required attributes are missing. IKEArtifactoryGem not ready.') unless self.ready?
+        RestClient::Request.execute(
+          :method => :get,
+          :url => 'https://' + @server + '/artifactory/api/storage/' + @repo_key + '/' + path,
+          :user => @user,
+          :password => @password
+        )do |response, request, result|
+          if response.code == 200
+            hash_path = JSON.parse response.to_str
+            hash_path['children'].each do | child |
+              object_info = self.get_object_info path + child['uri']
+              days_old = ( ( Time.now - Time.iso8601(object_info['lastModified']) ) / (24*60*60) ).to_int
+              objects[object_info['path'].split('/')[-1]] = days_old
+            end
+          else
+            return nil
+          end
+        end
+        objects
+      end
+
     end
   end
 end
