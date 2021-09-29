@@ -6,7 +6,9 @@ class UnitTestDockerCleaner < Minitest::Test
     @artifactory = IKE::Artifactory::DockerCleaner.new(
       repo_url: 'https://artifactory.internetbrands.com/artifactory/avvo-docker-local/avvo/amos',
       days_old: 30,
-      images_exclude_list: %w[fake1 fake2]
+      images_exclude_list: %w[fake1 fake2],
+      user: 'user',
+      password: 'password'
     )
   end
 
@@ -45,6 +47,23 @@ class UnitTestDockerCleaner < Minitest::Test
     assert @artifactory.respond_to? :images_exclude_list=
   end
 
-
 end
 
+class UnitTestDockerCleanerMethods < Minitest::Test
+
+  def setup
+    @docker_cleaner = IKE::Artifactory::DockerCleaner.new(
+      repo_url: 'https://artifactory.internetbrands.com/artifactory/avvo-docker-local/avvo/amos',
+      days_old: 30,
+      images_exclude_list: %w[fake1 fake2],
+      user: 'user',
+      password: 'password'
+    )
+  end
+
+  def test_can_call_cleanup!
+    @docker_cleaner.cleanup!  # should not fail
+  end
+
+
+end
