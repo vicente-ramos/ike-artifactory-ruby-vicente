@@ -49,6 +49,6 @@ class ClientFunctionalTest < Minitest::Test
     assert_includes result, 'fedora'
     assert_instance_of Array, result
   end
-  
+
 end
 

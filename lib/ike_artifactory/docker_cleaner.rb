@@ -9,6 +9,7 @@ module IKE
       attr_accessor :images_exclude_list
       attr_accessor :repo_name
       attr_accessor :repo_key
+      attr_accessor :client
 
       def initialize(repo_url:, days_old:, images_exclude_list:, user:, password:)
         @repo_url = repo_url
@@ -29,7 +30,16 @@ module IKE
       end
 
       def cleanup!
+        tags = @client.get_directories(@repo_name)
+        tags.each do | tag |
+          puts "Working with tag #{tag}"
 
+          if @images_exclude_list.include?(tag)
+            puts "Tag #{tag} is excluded."
+            next
+          end
+
+        end
       end
     end
   end

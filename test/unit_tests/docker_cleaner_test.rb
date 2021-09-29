@@ -65,5 +65,61 @@ class UnitTestDockerCleanerMethods < Minitest::Test
     @docker_cleaner.cleanup!  # should not fail
   end
 
+  def test_call_get_directories_with_repo_name
+    skip('Broken.')
+    mock_get_directories = Minitest::Mock.new()
+    mock_get_directories.expect :call,
+                                %w[fake1 fake2],
+                                ['avvo/amos']
+    client = @docker_cleaner.client
+    client.stub get_directories, mock_get_directories do
+      @docker_cleaner.cleanup!
+    end
+
+    assert_mock mock_get_directories
+  end
+
+  def test_loop_over_each_tag
+    skip('Broken.')
+    expected_output = 'Working with tag fake1\nWorking with tag fake2'
+    client = @docker_cleaner.client
+    client.stub get_directories, %w[fake1 fake2] do
+      assert_output(expected_output) { @docker_cleaner.cleanup! }
+    end
+  end
+
+  def test_check_if_tag_is_included_in_exclude_list
+    skip('Broken.')
+    mock_include = Minitest::Mock.new()
+    mock_include.expect :call,
+                        true,
+                        ['fake']
+
+    client = @docker_cleaner.client
+    client.stub get_directories, %w[fake] do
+      @docker_cleaner.images_exclude_list.stub include?, mock_include do
+        @docker_cleaner.cleanup!
+      end
+    end
+  end
+
+  def test_expected_output_when_excluded
+    skip('Broken.')
+    expected_output = 'Working with tag fake1\nTag fake1 is excluded.\nWorking with tag fake2'
+    mock_include = Minitest::Mock.new()
+    mock_include.expect :include?,
+                        true,
+                        ['fake1']
+    mock_include.expect :include?,
+                        false,
+                        ['fake2']
+
+    client = @docker_cleaner.client
+    client.stub get_directories, %w[fake1 fake2] do
+      @docker_cleaner.images_exclude_list.stub include?, mock_include do
+        assert_output(expected_output) { @docker_cleaner.cleanup! }
+      end
+    end
+  end
 
 end
