@@ -8,7 +8,8 @@ class UnitTestDockerCleaner < Minitest::Test
       days_old: 30,
       images_exclude_list: %w[fake1 fake2],
       user: 'user',
-      password: 'password'
+      password: 'password',
+      most_recent_images: 10
     )
   end
 
@@ -57,7 +58,8 @@ class UnitTestDockerCleanerMethods < Minitest::Test
       days_old: 30,
       images_exclude_list: %w[fake1 fake2],
       user: 'user',
-      password: 'password'
+      password: 'password',
+      most_recent_images: 10
     )
   end
 

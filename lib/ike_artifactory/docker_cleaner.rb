@@ -32,9 +32,9 @@ module IKE
       end
 
       def cleanup!
-        tags = @client.get_objects_by_days_old(@repo_name)
+        tags = @client.get_children(@repo_name)
         tags = tags.sort_by {|_key, value| value}.to_h
-        most_recent_tags = tags.keys[1..@most_recent_images]
+        most_recent_tags = tags.keys[0..@most_recent_images]
 
         tags.each do | tag, tag_days_old |
           puts "Working with tag #{tag}"
@@ -51,7 +51,7 @@ module IKE
 
           if tag_days_old > @days_old
             puts "Removing container image: #{tag}."
-            @client.delete_object "#{repo_name}/#{tag}"
+            @client.delete_object "#{@repo_name}/#{tag}"
           end
         end
       end

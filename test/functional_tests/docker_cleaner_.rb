@@ -8,7 +8,8 @@ class DockerCleanerClassTest < Minitest::Test
       days_old: 30,
       images_exclude_list: %w[fake1 fake2],
       user: ENV['TEST_USER'],
-      password: ENV['TEST_PASSWORD']
+      password: ENV['TEST_PASSWORD'],
+      most_recent_images: 10
     )
   end
 

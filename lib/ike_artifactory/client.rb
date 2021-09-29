@@ -1,6 +1,8 @@
 require 'time'
 require 'json'
 require 'rest-client'
+require 'uri'
+require 'pry-byebug'
 
 module IKE
   module Artifactory
@@ -105,7 +107,7 @@ module IKE
         end
       end
 
-      def get_objects_by_days_old path
+      def get_objects_by_days_old(path)
         objects = {}
         raise IKEArtifactoryClientNotReady.new(msg = 'Required attributes are missing. IKEArtifactoryGem not ready.') unless self.ready?
         RestClient::Request.execute(
@@ -128,6 +130,25 @@ module IKE
         objects
       end
 
+      def get_children(path)
+        objects = {}
+        raise IKEArtifactoryClientNotReady.new(msg = 'Required attributes are missing. IKEArtifactoryGem not ready.') unless self.ready?
+        RestClient::Request.execute(
+          :method => :get,
+          :url => "https://#{@server}:443/ui/api/v1/ui/nativeBrowser/#{@repo_key}/#{path}",
+        ) do |response, request, result|
+          if response.code == 200
+            hash_path = JSON.parse response.to_str
+            hash_path['children'].each do | child |
+              days_old = ( ( Time.now.to_i - (child['lastModified']/1000) ) / (24*60*60) ).to_int
+              objects[child['name']] = days_old
+            end
+          else
+            return nil
+          end
+        end
+        objects
+      end
     end
   end
 end
