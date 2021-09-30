@@ -11,6 +11,8 @@ module IKE
       attr_accessor :repo_key
       attr_accessor :client  # is not tested
       attr_accessor :most_recent_images  # is not tested
+      attr_accessor :tags  # is not tested. Used for testing
+      attr_accessor :most_recent_tags  # is not tested. Used for testing
 
       def initialize(repo_url:, days_old:, images_exclude_list:, user:, password:, most_recent_images:)
         @repo_url = repo_url
@@ -32,27 +34,27 @@ module IKE
       end
 
       def cleanup!
-        tags = @client.get_children(@repo_name)
-        tags = tags.sort_by {|_key, value| value}.to_h
-        most_recent_tags = tags.keys[0..@most_recent_images]
+        @tags = @client.get_children(@repo_name)
+        @tags = @tags.sort_by {|_key, value| value}.to_h
+        @most_recent_tags = tags.keys[0...@most_recent_images]
 
-        tags.each do | tag, tag_days_old |
+        @tags.each do | tag, tag_days_old |
           puts "Working with tag #{tag}"
-
-          if @images_exclude_list.include?(tag)
-            puts "Tag #{tag} is excluded."
-            next
-          end
-
-          if most_recent_tags.include?(tag)
-            puts "Tag #{tag} is a recent image."
-            next
-          end
-
-          if tag_days_old > @days_old
-            puts "Removing container image: #{tag}."
-            @client.delete_object "#{@repo_name}/#{tag}"
-          end
+        #
+        #   if @images_exclude_list.include?(tag)
+        #     puts "Tag #{tag} is excluded."
+        #     next
+        #   end
+        #
+        #   if most_recent_tags.include?(tag)
+        #     puts "Tag #{tag} is a recent image."
+        #     next
+        #   end
+        #
+        #   if tag_days_old > @days_old
+        #     puts "Removing container image: #{tag}."
+        #     @client.delete_object "#{@repo_name}/#{tag}"
+        #   end
         end
       end
     end

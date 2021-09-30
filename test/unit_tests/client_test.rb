@@ -570,7 +570,7 @@ class UnitTestClientMethods < Minitest::Test
     mock_request.expect :call,
                         true,
                         [:method => :get,
-                         :url => 'https://artifactory.internetbrands.com/ui/api/v1/ui/nativeBrowser/fake-path']
+                         :url => "https://#{@artifactory.server}:443/ui/api/v1/ui/nativeBrowser/#{@artifactory.repo_key}/fake-path"]
 
     RestClient::Request.stub :execute, mock_request do
       @artifactory.get_children 'fake-path'

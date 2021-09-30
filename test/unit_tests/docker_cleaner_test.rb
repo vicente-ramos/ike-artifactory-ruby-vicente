@@ -59,65 +59,76 @@ class UnitTestDockerCleanerMethods < Minitest::Test
       images_exclude_list: %w[fake1 fake2],
       user: 'user',
       password: 'password',
-      most_recent_images: 10
+      most_recent_images: 2
     )
   end
 
-  def test_call_get_objects_by_days_old_with_repo_name
-    skip('Broken.')
-    mock_get_objects_by_days_old = Minitest::Mock.new()
-    mock_get_objects_by_days_old.expect :call,
-                                        { 'fake' => 3 },
-                                ['avvo/amos']
-    client = @docker_cleaner.client
-    client.stub get_objects_by_days_old, mock_get_directories do
+  def test_call_get_children_with_repo_name
+    mock_get_children = Minitest::Mock.new()
+    mock_get_children.expect :call,
+                             { 'fake' => 3 },
+                             ['avvo/amos']
+
+
+    @docker_cleaner.client.stub :get_children, mock_get_children do
       @docker_cleaner.cleanup!
     end
+    assert_mock mock_get_children
+  end
 
-    assert_mock mock_get_directories
+  def test_sort_children
+    @docker_cleaner.client.stub :get_children, { 'fake1' => 3, 'fake2' => 1 } do
+      @docker_cleaner.cleanup!
+    end
+    assert_equal @docker_cleaner.tags.to_a, { 'fake2' => 1, 'fake1' => 3 }.to_a
+  end
+
+  def test_most_recent_tags
+    @docker_cleaner.client.stub :get_children, { 'fake1' => 3, 'fake2' => 111, 'fake3' => 17 } do
+      @docker_cleaner.cleanup!
+    end
+    assert_equal %w[fake1 fake3], @docker_cleaner.most_recent_tags
   end
 
   def test_loop_over_each_tag
-    skip('Broken.')
-    expected_output = 'Working with tag fake1\nWorking with tag fake2'
-    client = @docker_cleaner.client
-    client.stub get_objects_by_days_old, { 'fake1' => 3, 'fake2' => 4 } do
+    expected_output = "Working with tag fake2\nWorking with tag fake1\n"
+    @docker_cleaner.client.stub :get_children, { 'fake1' => 3, 'fake2' => 1 } do
       assert_output(expected_output) { @docker_cleaner.cleanup! }
     end
   end
-
-  def test_check_if_tag_is_included_in_exclude_list
-    skip('Broken.')
-    mock_include = Minitest::Mock.new()
-    mock_include.expect :call,
-                        true,
-                        ['fake']
-
-    client = @docker_cleaner.client
-    client.stub get_objects_by_days_old, { 'fake' => 3 } do
-      @docker_cleaner.images_exclude_list.stub include?, mock_include do
-        @docker_cleaner.cleanup!
-      end
-    end
-  end
-
-  def test_expected_output_when_excluded
-    skip('Broken.')
-    expected_output = 'Working with tag fake1\nTag fake1 is excluded.\nWorking with tag fake2'
-    mock_include = Minitest::Mock.new()
-    mock_include.expect :include?,
-                        true,
-                        ['fake1']
-    mock_include.expect :include?,
-                        false,
-                        ['fake2']
-
-    client = @docker_cleaner.client
-    client.stub get_objects_by_days_old, { 'fake1' => 3, 'fake2' => 4 } do
-      @docker_cleaner.images_exclude_list.stub include?, mock_include do
-        assert_output(expected_output) { @docker_cleaner.cleanup! }
-      end
-    end
-  end
+  #
+  # def test_check_if_tag_is_included_in_exclude_list
+  #   skip('Broken.')
+  #   mock_include = Minitest::Mock.new()
+  #   mock_include.expect :call,
+  #                       true,
+  #                       ['fake']
+  #
+  #   client = @docker_cleaner.client
+  #   client.stub get_objects_by_days_old, { 'fake' => 3 } do
+  #     @docker_cleaner.images_exclude_list.stub include?, mock_include do
+  #       @docker_cleaner.cleanup!
+  #     end
+  #   end
+  # end
+  #
+  # def test_expected_output_when_excluded
+  #   skip('Broken.')
+  #   expected_output = 'Working with tag fake1\nTag fake1 is excluded.\nWorking with tag fake2'
+  #   mock_include = Minitest::Mock.new()
+  #   mock_include.expect :include?,
+  #                       true,
+  #                       ['fake1']
+  #   mock_include.expect :include?,
+  #                       false,
+  #                       ['fake2']
+  #
+  #   client = @docker_cleaner.client
+  #   client.stub get_objects_by_days_old, { 'fake1' => 3, 'fake2' => 4 } do
+  #     @docker_cleaner.images_exclude_list.stub include?, mock_include do
+  #       assert_output(expected_output) { @docker_cleaner.cleanup! }
+  #     end
+  #   end
+  # end
 
 end
