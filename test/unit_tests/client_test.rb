@@ -1,5 +1,8 @@
 require "test_helper"
 
+
+TIME_LAST_MODIFIED_MILLISECONDS = (Time.now.to_i - 30*24*60*60) * 1000
+
 class UnitTestClientClass < Minitest::Test
 
   def setup
@@ -565,7 +568,6 @@ class UnitTestClientMethods < Minitest::Test
   end
 
   def test_get_children_call_get_api
-    # https://artifactory.internetbrands.com/ui/api/v1/ui/nativeBrowser/avvo-docker-local/avvo/amos
     mock_request = Minitest::Mock.new
     mock_request.expect :call,
                         true,
@@ -591,99 +593,63 @@ class UnitTestClientMethods < Minitest::Test
     end
   end
 
-  # def test_json_parse_called
-  #   mock_response = Minitest::Mock.new
-  #   mock_response.expect :code, 200
-  #   mock_response.expect :to_str, '{ "children": [{"name": "fake1", "folder": true},{"name": "fake2", "folder": false}] }'
-  #   mock_json_parse = Minitest::Mock.new
-  #   mock_json_parse.expect :call,
-  #                          { 'children' => ['fake']},
-  #                          ['{ "children": [{"uri": "/fake1", "folder": true},{"uri": "/fake2", "folder": false}] }']
-  #
-  #   RestClient::Request.stub :execute,
-  #                            nil,
-  #                            [mock_response, 'fake-request', 'fake-result'] do
-  #     JSON.stub :parse, mock_json_parse do
-  #       @artifactory.get_objects_by_user 'fake-path', 'fake-user'
-  #     end
-  #   end
-  #   assert_mock mock_json_parse
-  # end
-  #
-  # def test_get_objects_by_days_old_call_get_info_on_each_children
-  #   time = Time.now - 30*24*60*60
-  #   last_modified = time.strftime('%Y-%m-%dT%H:%M:%S.%L%z')
-  #
-  #   mock_get_object_info = Minitest::Mock.new
-  #   mock_get_object_info.expect :call,
-  #                               { 'createdBy' => 'someone', 'path' => 'fake-path', 'lastModified' => last_modified },
-  #                               ['fake-path/fake1']
-  #   mock_get_object_info.expect :call,
-  #                               { 'createdBy' => 'someone', 'path' => 'fake-path', 'lastModified' => last_modified },
-  #                               ['fake-path/fake2']
-  #
-  #   mock_response = Minitest::Mock.new
-  #   mock_response.expect :code, 200
-  #   mock_response.expect :to_str,
-  #                        '{ "children": [{"uri": "/fake1", "folder": true},{"uri": "/fake2", "folder": false}] }'
-  #   mock_response.expect :code, 200
-  #   mock_response.expect :to_str,
-  #                        '{ "children": [{"uri": "/fake1", "folder": true},{"uri": "/fake2", "folder": false}] }'
-  #
-  #   RestClient::Request.stub :execute,
-  #                            nil,
-  #                            [mock_response, 'fake-request', 'fake-result'] do
-  #     @artifactory.stub :get_object_info, mock_get_object_info do
-  #       @artifactory.stub :get_days_old, 10 do
-  #         @artifactory.get_objects_by_days_old 'fake-path'
-  #       end
-  #     end
-  #   end
-  #   assert_mock mock_get_object_info
-  # end
-  #
-  # # def test_get_objects_by_days_old_call_days_old
-  # #   mock_response = Minitest::Mock.new
-  # #   mock_response.expect :code, 200
-  # #   mock_response.expect :to_str, '{ "children": [{"uri": "/fake1", "folder": true}] }'
-  # #   mock_get_days_old = Minitest::Mock.new
-  # #   mock_get_days_old.expect :call, 30, ['fake-path/object']
-  # #
-  # #   RestClient::Request.stub :execute,
-  # #                            nil,
-  # #                            [mock_response, 'fake-request', 'fake-result'] do
-  # #     @artifactory.stub :get_object_info, {'createdBy' => 'Bob', 'path' => 'fake-path/object'} do
-  # #       @artifactory.stub :get_days_old, mock_get_days_old do
-  # #         @artifactory.get_objects_by_days_old 'fake-path'
-  # #       end
-  # #     end
-  # #   end
-  # #   assert_mock mock_get_days_old
-  # # end
-  #
-  # def test_get_objects_by_days_old_return_object_and_days
-  #   mock_response = Minitest::Mock.new
-  #   mock_response.expect :code, 200
-  #   mock_response.expect :to_str, '{ "children": [{"uri": "/fake1", "folder": true}] }'
-  #
-  #   time = Time.now - 30*24*60*60
-  #   last_modified = time.strftime('%Y-%m-%dT%H:%M:%S.%L%z')
-  #
-  #   RestClient::Request.stub :execute,
-  #                            nil,
-  #                            [mock_response, 'fake-request', 'fake-result'] do
-  #     @artifactory.stub :get_object_info, {'createdBy' => 'Bob',
-  #                                          'path' => 'fake-path/object',
-  #                                          'lastModified' => last_modified } do
-  #       @artifactory.stub :get_days_old, 30 do
-  #         result = @artifactory.get_objects_by_days_old 'fake-path'
-  #         assert_equal({'object' => 30}, result)
-  #       end
-  #     end
-  #   end
-  # end
+  def test_json_parse_called
+    mock_response = Minitest::Mock.new
+    mock_response.expect :code, 200
+    mock_response.expect :to_str, '{ "children": [{"name": "fake1", "folder": true},{"name": "fake2", "folder": false}] }'
+    mock_json_parse = Minitest::Mock.new
+    mock_json_parse.expect :call,
+                           { 'children' => [{ 'name' => 'fake1', "folder" => true, "lastModified" => TIME_LAST_MODIFIED_MILLISECONDS },
+                                            { 'name' => 'fake2', "folder" => false, "lastModified" => TIME_LAST_MODIFIED_MILLISECONDS }]},
+                           ['{ "children": [{"name": "fake1", "folder": true},{"name": "fake2", "folder": false}] }']
 
+    RestClient::Request.stub :execute,
+                             nil,
+                             [mock_response, 'fake-request', 'fake-result'] do
+      JSON.stub :parse, mock_json_parse do
+        @artifactory.get_children 'fake-path'
+      end
+    end
+    assert_mock mock_json_parse
+  end
 
+  def test_for_each_children_return_a_hash_key
+    mock_response = Minitest::Mock.new
+    mock_response.expect :code, 200
+    mock_response.expect :to_str, '{ "fake": "fake" }'
+    object_info =  { 'children' => [
+        { 'name' => 'fake1', "folder" => true, "lastModified" => TIME_LAST_MODIFIED_MILLISECONDS },
+        { 'name' => 'fake2', "folder" => false, "lastModified" => TIME_LAST_MODIFIED_MILLISECONDS }]}
+
+    RestClient::Request.stub :execute,
+                             nil,
+                             [mock_response, 'fake-request', 'fake-result'] do
+      JSON.stub :parse, object_info do
+        objects = @artifactory.get_children 'fake-path'
+        assert objects.has_key?('fake1')
+        assert objects.has_key?('fake2')
+      end
+    end
+  end
+
+  def test_returned_object_value_is_days_old
+    mock_response = Minitest::Mock.new
+    mock_response.expect :code, 200
+    mock_response.expect :to_str, '{ "fake": "fake" }'
+    object_info =  { 'children' => [
+      { 'name' => 'fake1', "folder" => true, "lastModified" => TIME_LAST_MODIFIED_MILLISECONDS },
+      { 'name' => 'fake2', "folder" => false, "lastModified" => TIME_LAST_MODIFIED_MILLISECONDS }]}
+
+    RestClient::Request.stub :execute,
+                             nil,
+                             [mock_response, 'fake-request', 'fake-result'] do
+      JSON.stub :parse, object_info do
+        objects = @artifactory.get_children 'fake-path'
+        assert_equal 30, objects['fake1']
+        assert_equal 30, objects['fake2']
+      end
+    end
+  end
 end
 
 
