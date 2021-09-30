@@ -39,22 +39,22 @@ module IKE
         @most_recent_tags = tags.keys[0...@most_recent_images]
 
         @tags.each do | tag, tag_days_old |
-          puts "Working with tag #{tag}"
-        #
-        #   if @images_exclude_list.include?(tag)
-        #     puts "Tag #{tag} is excluded."
-        #     next
-        #   end
-        #
-        #   if most_recent_tags.include?(tag)
-        #     puts "Tag #{tag} is a recent image."
-        #     next
-        #   end
-        #
-        #   if tag_days_old > @days_old
-        #     puts "Removing container image: #{tag}."
-        #     @client.delete_object "#{@repo_name}/#{tag}"
-        #   end
+          puts "Working with tag #{tag}."
+
+          if @images_exclude_list.include?(tag)
+            puts "Tag #{tag} is excluded."
+            next
+          end
+
+          if most_recent_tags.include?(tag)
+            puts "Tag #{tag} is a recent image."
+            next
+          end
+
+          if tag_days_old > @days_old
+            puts "Removing container image: #{tag}."
+            @client.delete_object "#{@repo_name}/#{tag}"
+          end
         end
       end
     end
