@@ -41,8 +41,7 @@ module IKE
           :user => @user,
           :password => @password
         ) do |response, request, result|
-          return true if response.code == 204
-          return false
+          return response.code == 204
         end
       end
 
