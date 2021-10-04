@@ -83,20 +83,6 @@ class UnitTestDockerCleanerMethods < Minitest::Test
     assert_equal @docker_cleaner.tags.to_a, { 'fake2' => 1, 'fake1' => 3 }.to_a
   end
 
-  def test_most_recent_tags
-    @docker_cleaner.client.stub :get_children, { 'fake1' => 3, 'fake2' => 5, 'fake3' => 4 } do
-      @docker_cleaner.cleanup!
-    end
-    assert_equal %w[fake1 fake3], @docker_cleaner.most_recent_tags
-  end
-
-  def test_loop_over_each_tag
-    expected_output = "Working with tag fake2.\nTag fake2 is a recent image.\nWorking with tag fake1.\nTag fake1 is a recent image.\n"
-    @docker_cleaner.client.stub :get_children, { 'fake1' => 3, 'fake2' => 1 } do
-      assert_output(expected_output) { @docker_cleaner.cleanup! }
-    end
-  end
-
   def test_check_if_tag_is_included_in_exclude_list
     mock_exclude_list = Minitest::Mock.new()
     mock_exclude_list.expect :call,
@@ -111,70 +97,6 @@ class UnitTestDockerCleanerMethods < Minitest::Test
     assert_mock mock_exclude_list
   end
 
-  def test_image_is_excluded
-    expected_output = "Working with tag fake.\nTag fake is excluded.\n"
-    @docker_cleaner.client.stub :get_children, { 'fake' => 3 } do
-      @docker_cleaner.images_exclude_list.stub :include?, true do
-        assert_output(expected_output) { @docker_cleaner.cleanup! }
-      end
-    end
-  end
-
-  def test_if_excluded_go_with_next_tag
-    expected_output = "Working with tag fake-x.\nTag fake-x is excluded.\nWorking with tag fake1.\nTag fake1 is a recent image.\n"
-    @docker_cleaner.client.stub :get_children, { 'fake-x' => 3, 'fake1' => 3 } do
-      assert_output(expected_output) { @docker_cleaner.cleanup! }
-    end
-  end
-
-  def test_check_if_tag_is_most_recent_tag
-    skip("The problem is that when stubbing most_recent_tags cleanup haven't be called and it is nil. nil do not have include.")
-    mock_most_recent_tag = Minitest::Mock.new()
-    mock_most_recent_tag.expect :call,
-                                true,
-                                ['fake']
-    @docker_cleaner.most_recent_tags = []
-    @docker_cleaner.client.stub :get_children, { 'fake' => 3 } do
-      @docker_cleaner.most_recent_tags.stub :include?, mock_most_recent_tag do
-        @docker_cleaner.cleanup!
-
-      end
-    end
-    assert_mock mock_most_recent_tag
-  end
-
-  def test_most_recent_tag_are_excluded
-    expected_output = "Working with tag fake.\nTag fake is a recent image.\n"
-    @docker_cleaner.client.stub :get_children, { 'fake' => 3 } do
-      assert_output(expected_output) { @docker_cleaner.cleanup! }
-    end
-  end
-
-  def test_if_recent_image_go_with_next_tag
-    # This test is not useful and shows that next sentence is not needed after checking if is a recent image
-    expected_output = "Working with tag fake2.\nTag fake2 is a recent image.\n"
-    expected_output += "Working with tag fake3.\nTag fake3 is a recent image.\n"
-    expected_output += "Working with tag fake-x.\nTag fake-x is excluded.\n"
-    @docker_cleaner.client.stub :get_children, {
-      'fake-x' => 100, 'fake2' => 31, 'fake3' => 32, } do
-      assert_output(expected_output) { @docker_cleaner.cleanup! }
-    end
-
-  end
-
-  def test_if_tag_is_older_than_days_old
-    expected_output = "Working with tag fake1.\nTag fake1 is a recent image.\n"
-    expected_output += "Working with tag fake2.\nTag fake2 is a recent image.\n"
-    expected_output += "Working with tag fake3.\nWorking with tag fake4.\n"
-    expected_output += "Working with tag fake5.\nRemoving container image: fake5.\n"
-    @docker_cleaner.client.stub :get_children, {
-      'fake1' => 21, 'fake2' => 22, 'fake3' => 23, 'fake4' => 24,  'fake5' => 35, } do
-      @docker_cleaner.client.stub :delete_object, true do
-        assert_output(expected_output) { @docker_cleaner.cleanup! }
-      end
-    end
-  end
-
   def test_if_tag_is_older_than_days_old_is_deleted
     mock_delete_object = Minitest::Mock.new()
     mock_delete_object.expect :call,
@@ -184,6 +106,73 @@ class UnitTestDockerCleanerMethods < Minitest::Test
       'fake1' => 21, 'fake2' => 22, 'fake3' => 23, 'fake4' => 24,  'fake5' => 35, } do
       @docker_cleaner.client.stub :delete_object, mock_delete_object do
         @docker_cleaner.cleanup!
+      end
+    end
+    assert_mock mock_delete_object
+  end
+
+  def test_images_are_excluded
+    mock_delete_object = Minitest::Mock.new()
+    mock_delete_object.expect :call,
+                              true,
+                              ["#{@docker_cleaner.repo_name}/fake3"]
+    mock_delete_object.expect :call,
+                              true,
+                              ["#{@docker_cleaner.repo_name}/fake4"]
+    mock_delete_object.expect :call,
+                              true,
+                              ["#{@docker_cleaner.repo_name}/fake5"]
+    @docker_cleaner.client.stub :get_children, {
+      'fake-x' => 71, 'fake-y' => 62, 'fake3' => 90, 'fake4' => 91,  'fake5' => 92, } do
+      @docker_cleaner.client.stub :delete_object, mock_delete_object do
+        result = @docker_cleaner.cleanup!
+        refute_includes result, 'fake-x'
+        refute_includes result, 'fake-y'
+      end
+    end
+    assert_mock mock_delete_object
+  end
+
+  def test_images_are_most_recent
+    mock_delete_object = Minitest::Mock.new()
+    mock_delete_object.expect :call,
+                              true,
+                              ["#{@docker_cleaner.repo_name}/fake3"]
+    mock_delete_object.expect :call,
+                              true,
+                              ["#{@docker_cleaner.repo_name}/fake4"]
+    mock_delete_object.expect :call,
+                              true,
+                              ["#{@docker_cleaner.repo_name}/fake5"]
+    @docker_cleaner.client.stub :get_children, {
+      'fake-a' => 11, 'fake-b' => 12, 'fake3' => 31, 'fake4' => 32,  'fake5' => 33, } do
+      @docker_cleaner.client.stub :delete_object, mock_delete_object do
+        result = @docker_cleaner.cleanup!
+        refute_includes result, 'fake-a'
+        refute_includes result, 'fake-b'
+      end
+    end
+    assert_mock mock_delete_object
+  end
+
+  def test_images_are_removed
+    mock_delete_object = Minitest::Mock.new()
+    mock_delete_object.expect :call,
+                              true,
+                              ["#{@docker_cleaner.repo_name}/fake3"]
+    mock_delete_object.expect :call,
+                              true,
+                              ["#{@docker_cleaner.repo_name}/fake4"]
+    mock_delete_object.expect :call,
+                              true,
+                              ["#{@docker_cleaner.repo_name}/fake5"]
+    @docker_cleaner.client.stub :get_children, {
+      'fake-a' => 11, 'fake-b' => 12, 'fake3' => 31, 'fake4' => 32,  'fake5' => 33, } do
+      @docker_cleaner.client.stub :delete_object, mock_delete_object do
+        result = @docker_cleaner.cleanup!
+        assert_includes result, 'fake3'
+        assert_includes result, 'fake4'
+        assert_includes result, 'fake5'
       end
     end
     assert_mock mock_delete_object
