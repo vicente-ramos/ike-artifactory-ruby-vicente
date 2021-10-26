@@ -7,6 +7,9 @@ require 'pry-byebug'
 module IKE
   module Artifactory
     class Client
+
+      IMAGE_MANIFEST = 'manifest.json'
+
       attr_accessor :server
       attr_accessor :repo_key
       attr_accessor :folder_path
@@ -37,7 +40,7 @@ module IKE
 
         RestClient::Request.execute(
           :method => :delete,
-          :url => 'https://' + @server + '/artifactory/' + @repo_key + '/' + object_path,
+          :url => @server + '/artifactory/' + @repo_key + '/' + object_path,
           :user => @user,
           :password => @password
         ) do |response, request, result|
@@ -55,7 +58,7 @@ module IKE
 
         RestClient::Request.execute(
           :method => :get,
-          :url => 'https://' + @server + '/artifactory/api/storage/' + @repo_key + '/' + path + '/',
+          :url => @server + '/artifactory/api/storage/' + @repo_key + '/' + path + '/',
           :user => @user,
           :password => @password
         ) do |response, request, result|
@@ -78,7 +81,7 @@ module IKE
 
         RestClient::Request.execute(
           :method => :get,
-          :url => 'https://' + @server + '/artifactory/api/storage/' + @repo_key + '/' + object_path,
+          :url => @server + '/artifactory/api/storage/' + @repo_key + '/' + object_path,
           :user => @user,
           :password => @password
         ) do |response, request, result|
@@ -96,7 +99,7 @@ module IKE
 
         RestClient::Request.execute(
           :method => :get,
-          :url => 'https://' + @server + '/artifactory/api/storage/' + @repo_key + '/' + object_path,
+          :url => @server + '/artifactory/api/storage/' + @repo_key + '/' + object_path,
           :user => @user,
           :password => @password
         ) do |response, request, result|
@@ -111,7 +114,7 @@ module IKE
         raise IKEArtifactoryClientNotReady.new(msg = 'Required attributes are missing. IKEArtifactoryGem not ready.') unless self.ready?
         RestClient::Request.execute(
           :method => :get,
-          :url => 'https://' + @server + '/artifactory/api/storage/' + @repo_key + '/' + path,
+          :url => @server + '/artifactory/api/storage/' + @repo_key + '/' + path,
           :user => @user,
           :password => @password
         )do |response, request, result|
@@ -134,7 +137,7 @@ module IKE
         raise IKEArtifactoryClientNotReady.new(msg = 'Required attributes are missing. IKEArtifactoryGem not ready.') unless self.ready?
         RestClient::Request.execute(
           :method => :get,
-          :url => "https://#{@server}:443/ui/api/v1/ui/nativeBrowser/#{@repo_key}/#{path}",
+          :url => "#{@server}:443/ui/api/v1/ui/nativeBrowser/#{@repo_key}/#{path}",
         ) do |response, request, result|
           if response.code == 200
             hash_path = JSON.parse response.to_str
@@ -147,6 +150,12 @@ module IKE
           end
         end
         objects
+      end
+
+      def get_images(path)
+        get_children(path).select do |(folder, _age)|
+          get_object_info([path, folder, IMAGE_MANIFEST].join('/'))
+        end
       end
     end
   end
